@@ -49,11 +49,10 @@ fn fxa_complete_oauth_flow(mut cx: FunctionContext) -> JsResult<JsBoolean> {
 
 fn fxa_get_access_token(mut cx: FunctionContext) -> JsResult<JsString> {
     let handle = cx.argument::<JsString>(0)?.value().parse::<u64>().unwrap();
+    let scope = cx.argument::<JsString>(1)?.value();
     let json = ACCOUNTS
         .get_mut_u64(handle, |fxa| -> Result<_, HandleError> {
-            let access_token = fxa
-                .get_access_token(&format!("{} {}", scopes::OLD_SYNC, scopes::PROFILE))
-                .unwrap();
+            let access_token = fxa.get_access_token(&scope).unwrap();
             let json = serde_json::to_string(&access_token).unwrap();
             Ok(json)
         })
