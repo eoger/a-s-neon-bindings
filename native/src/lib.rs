@@ -73,24 +73,15 @@ fn logins_sync(mut cx: FunctionContext) -> JsResult<JsUndefined> {
     let key_id = cx.argument::<JsString>(1)?.value();
     let access_token = cx.argument::<JsString>(2)?.value();
     let sync_key = cx.argument::<JsString>(3)?.value();
+    let cb = cx.argument::<JsFunction>(4)?;
 
-    PASSWORDS
-        .get_mut_u64(handle, |state| -> Result<_, HandleError> {
-            state
-                .lock()
-                .unwrap()
-                .sync(
-                    &sync15::Sync15StorageClientInit {
-                        key_id,
-                        access_token,
-                        tokenserver_url: url::Url::parse(TOKENSERVER_URL).unwrap(),
-                    },
-                    &sync15::KeyBundle::from_ksync_base64(sync_key.as_str()).unwrap(),
-                )
-                .unwrap();
-            Ok(())
-        })
-        .unwrap();
+    LoginsSyncTask {
+        logins_handle: handle,
+        key_id,
+        access_token,
+        sync_key,
+    }
+    .schedule(cb);
     Ok(cx.undefined())
 }
 
@@ -117,3 +108,46 @@ register_module!(mut cx, {
     cx.export_function("loginsList", logins_list)?;
     Ok(())
 });
+
+// Ideally we should do it for every function that hits the network but heh.
+struct LoginsSyncTask {
+    logins_handle: u64,
+    key_id: String,
+    access_token: String,
+    sync_key: String,
+}
+
+impl Task for LoginsSyncTask {
+    type Output = ();
+    type Error = String;
+    type JsEvent = JsUndefined;
+
+    fn perform(&self) -> Result<Self::Output, Self::Error> {
+        PASSWORDS
+            .get_mut_u64(self.logins_handle, |state| -> Result<_, HandleError> {
+                state
+                    .lock()
+                    .unwrap()
+                    .sync(
+                        &sync15::Sync15StorageClientInit {
+                            key_id: self.key_id.clone(),
+                            access_token: self.access_token.clone(),
+                            tokenserver_url: url::Url::parse(TOKENSERVER_URL).unwrap(),
+                        },
+                        &sync15::KeyBundle::from_ksync_base64(self.sync_key.as_str()).unwrap(),
+                    )
+                    .unwrap();
+                Ok(())
+            })
+            .unwrap();
+        Ok(())
+    }
+
+    fn complete(
+        self,
+        mut cx: TaskContext,
+        _result: Result<Self::Output, Self::Error>,
+    ) -> JsResult<Self::JsEvent> {
+        Ok(cx.undefined())
+    }
+}
