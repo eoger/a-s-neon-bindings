@@ -1,0 +1,14 @@
+{
+  "name": "a-s-neon",
+  "version": "0.1.0",
+  "description": "",
+  "main": "lib/index.js",
+  "author": "Edouard Oger <eoger@fastmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "neon-cli": "^0.3.1"
+  },
+  "scripts": {
+    "install": "neon build"
+  }
+}

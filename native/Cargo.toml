@@ -1,0 +1,25 @@
+[package]
+name = "a-s-neon"
+version = "0.1.0"
+authors = ["Edouard Oger <eoger@fastmail.com>"]
+license = "MIT"
+edition = "2018"
+build = "build.rs"
+exclude = ["artifacts.json", "index.node"]
+
+[lib]
+name = "a_s_neon"
+crate-type = ["cdylib"]
+
+[build-dependencies]
+neon-build = "0.3.1"
+
+[dependencies]
+ffi-support = "0.3.5"
+fxa-client = { git = "https://github.com/mozilla/application-services", features = ["reqwest"] }
+logins = { git = "https://github.com/mozilla/application-services", features = ["reqwest"] }
+sync15 = { git = "https://github.com/mozilla/application-services", features = ["reqwest"] }
+lazy_static = "1.4.0"
+serde_json = "1.0"
+neon = "0.3.1"
+url = "1.7.1"
